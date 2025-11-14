@@ -16,7 +16,7 @@ This repository contains the slides, stress test artifacts, and analysis data fo
 
 | Resource | Description | Link |
 | :--- | :--- | :--- |
-| **Presentation Slides** | The full, embedded slide deck from the session. | [View Slides on GitHub Pages](./index.html) |
+| **Presentation Slides** | The full, embedded slide deck from the session. | [View Slides on GitHub Pages](https://ajaysundark.github.io/k8s-memory-swap-stress-tests/) |
 | **Stress Test Code** | Kubernetes manifests, configurations, and scripts used for the NodeSwap stress tests. | [Explore Code Artifacts](./stress-tests-code/) |
 | **KubeCon Sched** | Official session details, abstract, and speaker information. | [View on Sched.com](https://kccncna2025.sched.com/event/dd1483bb74f02af3c69fc761310a5a6f/edit) |
 
