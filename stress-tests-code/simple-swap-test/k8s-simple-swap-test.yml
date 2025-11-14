@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: simple-swap-test
+  labels:
+    log-prefix: "simple-swap-test-300MBps-rate-40GiB-target"
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: gke-swap-test-default-pool-b7f70881-755f
+  hostPID: true
+  containers:
+    - name: stress-container
+      image: gcr.io/ajaysundar-gke-multi-cloud-dev/simple_swap_test:v1.8
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          mkdir -p /tmp/$(LOG_PREFIX)
+          ./swap_stress_test \
+            --targetMiB 12000 \
+            --incrementMiB 300 \
+            --timeout 1000 \
+            --hold 5 \
+            --holdStrategy hot \
+            --report /tmp/$(LOG_PREFIX)/
+      env:
+        - name: LOG_PREFIX
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['log-prefix']
+      resources:
+        requests:
+          memory: "12Gi"
+          cpu: "125m"
+        limits:
+          memory: "32Gi"
+          cpu: "1"
+      volumeMounts:
+        - name: podinfo
+          mountPath: /etc/podinfo
+        - name: tmp
+          mountPath: /tmp
+        - name: cgroup-mount
+          mountPath: /sys/fs/cgroup
+          readOnly: true
+  initContainers:
+    - name: vmstat-sidecar
+      image: gcr.io/ajaysundar-gke-multi-cloud-dev/vmstat_app:1.0
+      restartPolicy: Always
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          mkdir -p /tmp/$(LOG_PREFIX)
+          exec vmstat -a -SM -w -t 1 | tee /tmp/$(LOG_PREFIX)_vmstat.log
+      env:
+        -  name: LOG_PREFIX
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['log-prefix']
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "125m"
+        limits:
+          memory: "64Mi"
+          cpu: "250m"
+      volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+  volumes:
+    - name: cgroup-mount
+      hostPath:
+        path: /sys/fs/cgroup
+        type: Directory
+    - name: tmp
+      hostPath:
+        path: /tmp/
+    - name: podinfo
+      downwardAPI:
+        items:
+          -  path: "cpu_limit"
+             resourceFieldRef:
+              containerName: stress-container
+              resource: limits.cpu
+              divisor: "1m"
+          -  path: "cpu_request"
+             resourceFieldRef:
+              containerName: stress-container
+              resource: requests.cpu
+              divisor: "1m"
+          -  path: "memory_limit"
+             resourceFieldRef:
+              containerName: stress-container
+              resource: limits.memory
+              divisor: "1Mi"
+          -  path: "memory_request"
+             resourceFieldRef:
+              containerName: stress-container
+              resource: requests.memory
+              divisor: "1Mi"
+          - path: "pod_id"
+            fieldRef:
+              fieldPath: metadata.uid
+  restartPolicy: Never
