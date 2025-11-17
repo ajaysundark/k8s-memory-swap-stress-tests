@@ -41,4 +41,4 @@ From kernel bits --
 
 ## Connect
 
-* **Kubernetes Slack:** `#sig-node` channel
+* **Kubernetes Slack:** ajaysundark@ `#sig-node` channel
